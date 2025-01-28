@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор сборки ПК</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #0d0d0d;
+            color: #e0e0e0;
+        }
+        header {
+            background: linear-gradient(45deg, #1a1a1a, #2c2c2c);
+            padding: 25px;
+            text-align: center;
+            font-size: 32px;
+            border-bottom: 3px solid #444;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            padding: 30px;
+            max-width: 1600px; /* Увеличение ширины контейнера */
+            margin: 0 auto;
+            gap: 30px;
+        }
+        .sidebar {
+            width: 480px; /* Увеличение ширины боковой панели */
+            background: linear-gradient(to bottom, #1a1a1a, #222);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+        }
+        .sidebar h2 {
+            font-size: 24px;
+            margin-bottom: 25px;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0,255,136,0.3);
+        }
+        .component {
+            margin-bottom: 20px;
+            background: rgba(44, 44, 44, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+        .component:hover {
+            transform: translateX(5px);
+        }
+        .component label {
+            display: block;
+            margin-bottom: 10px;
+            color: #00ff88;
+            font-weight: bold;
+        }
+        .component select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #444;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .component select:hover {
+            border-color: #00ff88;
+        }
+        .summary {
+            flex-grow: 1;
+            background: linear-gradient(to bottom, #1a1a1a, #222);
+            padding: 15px; /* Уменьшение отступов */
+            border-radius: 15px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+            max-width: 1000px; /* Увеличение ширины зоны справа */
+        }
+        .floating-summary {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: rgba(26, 26, 26, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+            display: none;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        .compatibility-warning {
+            background-color: #ff4444;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        .summary h2 {
+            font-size: 20px; /* Уменьшение размера шрифта */
+            margin-bottom: 20px; /* Уменьшение отступов */
+            color: #00ff88;
+        }
+        .summary ul {
+            list-style: none;
+            padding: 0;
+        }
+        .summary li {
+            margin-bottom: 15px; /* Уменьшение отступов */
+            padding: 10px; /* Уменьшение отступов */
+            background: rgba(44, 44, 44, 0.5);
+            border-radius: 10px;
+            transition: transform 0.2s;
+            max-width: 70%; /* Уменьшение ширины элементов */
+            display: inline-block; /* Для размещения фото корпуса справа */
+        }
+        .summary li:hover {
+            transform: translateX(5px);
+            background: rgba(44, 44, 44, 0.8);
+        }
+        .total {
+            margin-top: 20px; /* Уменьшение отступов */
+            font-size: 24px; /* Уменьшение размера шрифта */
+            font-weight: bold;
+            color: #00ff88;
+            text-align: center;
+            padding: 15px; /* Уменьшение отступов */
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+        }
+        .reset {
+            margin-top: 25px;
+            padding: 10px 20px; /* Уменьшение отступов */
+            background: linear-gradient(45deg, #ff5722, #f44336);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        .reset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,87,34,0.4);
+        }
+        @media (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: auto;
+                margin-right: 0;
+            }
+            .floating-summary {
+                width: 100%;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>Симулятор сборки ПК</header>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Выберите компоненты</h2>
+            <!-- Добавлены новые опции для каждого компонента -->
+            <div class="component">
+                <label for="cpu">Процессор:</label>
+                <select id="cpu" onchange="updatePrice()">
+                    <option value="0">Выберите процессор</option>
+<!-- Intel -->
+<option value="1000" data-info="Intel Pentium 4, 1C/1T, 1.5 GHz">Intel Pentium 4</option>
+<option value="1500" data-info="Intel Pentium D, 2C/2T, 2.8 GHz">Intel Pentium D</option>
+<option value="2000" data-info="Intel Core 2 Duo E6600, 2C/2T, 2.4 GHz">Intel Core 2 Duo E6600</option>
+<option value="2500" data-info="Intel Core 2 Quad Q6600, 4C/4T, 2.4 GHz">Intel Core 2 Quad Q6600</option>
+<option value="3000" data-info="Intel Core i3-530, 2C/4T, 2.9 GHz">Intel Core i3-530</option>
+<option value="3500" data-info="Intel Core i5-2500, 4C/4T, 3.3 GHz">Intel Core i5-2500</option>
+<option value="4000" data-info="Intel Core i7-2600, 4C/8T, 3.4 GHz">Intel Core i7-2600</option>
+<option value="4500" data-info="Intel Core i7-3770K, 4C/8T, 3.5 GHz">Intel Core i7-3770K</option>
+<option value="5000" data-info="Intel Core i5-4670K, 4C/4T, 3.4 GHz">Intel Core i5-4670K</option>
+<option value="5500" data-info="Intel Core i7-4790K, 4C/8T, 4.0 GHz">Intel Core i7-4790K</option>
+<option value="6000" data-info="Intel Core i5-6600K, 4C/4T, 3.5 GHz">Intel Core i5-6600K</option>
+<option value="6500" data-info="Intel Core i7-6700K, 4C/8T, 4.0 GHz">Intel Core i7-6700K</option>
+<option value="7000" data-info="Intel Core i3-7350K, 2C/4T, 4.2 GHz">Intel Core i3-7350K</option>
+<option value="7500" data-info="Intel Core i5-7600K, 4C/4T, 3.8 GHz">Intel Core i5-7600K</option>
+<option value="8000" data-info="Intel Core i7-7700K, 4C/8T, 4.2 GHz">Intel Core i7-7700K</option>
+<option value="8500" data-info="Intel Core i5-8400, 6C/6T, 2.8 GHz">Intel Core i5-8400</option>
+<option value="9000" data-info="Intel Core i7-8700K, 6C/12T, 3.7 GHz">Intel Core i7-8700K</option>
+<option value="9500" data-info="Intel Core i9-9900K, 8C/16T, 3.6 GHz">Intel Core i9-9900K</option>
+<option value="10000" data-info="Intel Core i9-10900K, 10C/20T, 3.7 GHz">Intel Core i9-10900K</option>
+<option value="11000" data-info="Intel Core i7-11700K, 8C/16T, 3.6 GHz">Intel Core i7-11700K</option>
+<option value="12000" data-info="Intel Core i9-11900K, 8C/16T, 3.5 GHz">Intel Core i9-11900K</option>
+<option value="13000" data-info="Intel Core i9-12900K, 16C/24T, 3.2 GHz">Intel Core i9-12900K</option>
+<option value="14000" data-info="Intel Core i9-13900K, 24C/32T, 3.0 GHz">Intel Core i9-13900K</option>
+<option value="15000" data-info="Intel Xeon W-3175X, 28C/56T, 3.1 GHz">Intel Xeon W-3175X</option>
+
+<!-- AMD -->
+<option value="1000" data-info="AMD Athlon XP 2000+, 1C/1T, 1.67 GHz">AMD Athlon XP 2000+</option>
+<option value="1500" data-info="AMD Athlon 64 X2 4800+, 2C/2T, 2.4 GHz">AMD Athlon 64 X2 4800+</option>
+<option value="2000" data-info="AMD Phenom II X4 955, 4C/4T, 3.2 GHz">AMD Phenom II X4 955</option>
+<option value="2500" data-info="AMD FX-4300, 4C/4T, 3.8 GHz">AMD FX-4300</option>
+<option value="3000" data-info="AMD Ryzen 3 1200, 4C/4T, 3.1 GHz">AMD Ryzen 3 1200</option>
+<option value="3500" data-info="AMD Ryzen 5 1400, 4C/8T, 3.2 GHz">AMD Ryzen 5 1400</option>
+<option value="4000" data-info="AMD Ryzen 7 1700, 8C/16T, 3.0 GHz">AMD Ryzen 7 1700</option>
+<option value="4500" data-info="AMD Ryzen 5 1600, 6C/12T, 3.2 GHz">AMD Ryzen 5 1600</option>
+<option value="5000" data-info="AMD Ryzen 7 2700, 8C/16T, 3.2 GHz">AMD Ryzen 7 2700</option>
+<option value="5500" data-info="AMD Ryzen 5 3600, 6C/12T, 3.6 GHz">AMD Ryzen 5 3600</option>
+<option value="6000" data-info="AMD Ryzen 7 3700X, 8C/16T, 3.6 GHz">AMD Ryzen 7 3700X</option>
+<option value="6500" data-info="AMD Ryzen 5 5600X, 6C/12T, 3.7 GHz">AMD Ryzen 5 5600X</option>
+<option value="7000" data-info="AMD Ryzen 9 3900X, 12C/24T, 3.8 GHz">AMD Ryzen 9 3900X</option>
+<option value="7500" data-info="AMD Ryzen 7 5800X, 8C/16T, 3.8 GHz">AMD Ryzen 7 5800X</option>
+<option value="8000" data-info="AMD Ryzen 9 5900X, 12C/24T, 3.7 GHz">AMD Ryzen 9 5900X</option>
+<option value="8500" data-info="AMD Ryzen 5 7600X, 6C/12T, 4.3 GHz">AMD Ryzen 5 7600X</option>
+<option value="9000" data-info="AMD Ryzen 9 7950X, 16C/32T, 4.5 GHz">AMD Ryzen 9 7950X</option>
+<option value="10000" data-info="AMD Ryzen 9 7950X3D, 16C/32T, 4.2 GHz">AMD Ryzen 9 7950X3D</option>
+<option value="11000" data-info="AMD Ryzen Threadripper 1920X, 12C/24T, 3.5 GHz">AMD Ryzen Threadripper 1920X</option>
+<option value="12000" data-info="AMD Ryzen Threadripper 2990WX, 32C/64T, 3.0 GHz">AMD Ryzen Threadripper 2990WX</option>
+
+                </select>
+            </div>
+
+            <!-- Аналогично добавлены новые опции для остальных компонентов -->
+            <!-- Пример для видеокарты -->
+            <div class="component">
+                <label for="gpu">Видеокарта:</label>
+                <select id="gpu" onchange="updatePrice()">
+                    <option value="0">Выберите видеокарту</option>
+                    <option value="5000" data-info="NVIDIA GTX 1650, 4GB GDDR5">NVIDIA GTX 1650</option>
+                    <option value="6000" data-info="NVIDIA GTX 1660, 6GB GDDR5">NVIDIA GTX 1660</option>
+                    <option value="7000" data-info="NVIDIA GTX 1660 Ti, 6GB GDDR5">NVIDIA GTX 1660 Ti</option>
+                    <option value="9000" data-info="NVIDIA GTX 1660 Super, 6GB GDDR5">NVIDIA GTX 1660 Super</option>
+                    <option value="12000" data-info="NVIDIA RTX 2060, 6GB GDDR6">NVIDIA RTX 2060</option>
+                    <option value="14000" data-info="NVIDIA RTX 2060 Super, 8GB GDDR6">NVIDIA RTX 2060 Super</option>
+                    <option value="16000" data-info="NVIDIA RTX 2070, 8GB GDDR6">NVIDIA RTX 2070</option>
+                    <option value="18000" data-info="NVIDIA RTX 2070 Super, 8GB GDDR6">NVIDIA RTX 2070 Super</option>
+                    <option value="20000" data-info="NVIDIA RTX 2080, 8GB GDDR6">NVIDIA RTX 2080</option>
+                    <option value="25000" data-info="NVIDIA RTX 2080 Super, 8GB GDDR6">NVIDIA RTX 2080 Super</option>
+                    <option value="30000" data-info="NVIDIA RTX 2080 Ti, 11GB GDDR6">NVIDIA RTX 2080 Ti</option>
+                    <option value="32000" data-info="NVIDIA RTX 3060, 12GB GDDR6">NVIDIA RTX 3060</option>
+                    <option value="34000" data-info="NVIDIA RTX 3060 Ti, 8GB GDDR6">NVIDIA RTX 3060 Ti</option>
+                    <option value="37000" data-info="NVIDIA RTX 3070, 8GB GDDR6">NVIDIA RTX 3070</option>
+                    <option value="40000" data-info="NVIDIA RTX 3070 Ti, 8GB GDDR6X">NVIDIA RTX 3070 Ti</option>
+                    <option value="45000" data-info="NVIDIA RTX 3080, 10GB GDDR6X">NVIDIA RTX 3080</option>
+                    <option value="50000" data-info="NVIDIA RTX 3080 Ti, 12GB GDDR6X">NVIDIA RTX 3080 Ti</option>
+                    <option value="55000" data-info="NVIDIA RTX 3090, 24GB GDDR6X">NVIDIA RTX 3090</option>
+                    <option value="65000" data-info="NVIDIA RTX 4090, 24GB GDDR6X">NVIDIA RTX 4090</option>
+                    <option value="5000" data-info="AMD Radeon RX 5500 XT, 4GB GDDR6">AMD Radeon RX 5500 XT</option>
+                    <option value="6000" data-info="AMD Radeon RX 5600 XT, 6GB GDDR6">AMD Radeon RX 5600 XT</option>
+                    <option value="9000" data-info="AMD Radeon RX 6600, 8GB GDDR6">AMD Radeon RX 6600</option>
+                    <option value="10000" data-info="AMD Radeon RX 5600, 6GB GDDR6">AMD Radeon RX 5600</option>
+                    <option value="12000" data-info="AMD Radeon RX 6700 XT, 12GB GDDR6">AMD Radeon RX 6700 XT</option>
+                    <option value="14000" data-info="AMD Radeon RX 6700, 12GB GDDR6">AMD Radeon RX 6700</option>
+                    <option value="16000" data-info="AMD Radeon RX 6800, 16GB GDDR6">AMD Radeon RX 6800</option>
+                    <option value="18000" data-info="AMD Radeon RX 6800 XT, 16GB GDDR6">AMD Radeon RX 6800 XT</option>
+                    <option value="20000" data-info="AMD Radeon RX 6900 XT, 16GB GDDR6">AMD Radeon RX 6900 XT</option>
+                    <option value="22000" data-info="AMD Radeon RX 6950 XT, 16GB GDDR6">AMD Radeon RX 6950 XT</option>
+                    <option value="25000" data-info="AMD Radeon RX 7900 XT, 20GB GDDR6">AMD Radeon RX 7900 XT</option>
+                    <option value="30000" data-info="AMD Radeon RX 7900 XTX, 24GB GDDR6">AMD Radeon RX 7900 XTX</option>
+                    <option value="24000" data-info="Intel Arc A750, 8GB GDDR6">Intel Arc A750</option>
+                    <option value="30000" data-info="Intel Arc A770, 16GB GDDR6">Intel Arc A770</option>
+                    <option value="8000" data-info="NVIDIA GTX 1070, 8GB GDDR5">NVIDIA GTX 1070</option>
+                    <option value="9000" data-info="NVIDIA GTX 1070 Ti, 8GB GDDR5">NVIDIA GTX 1070 Ti</option>
+                    <option value="10000" data-info="NVIDIA GTX 1080, 8GB GDDR5X">NVIDIA GTX 1080</option>
+                    <option value="12000" data-info="NVIDIA GTX 1080 Ti, 11GB GDDR5X">NVIDIA GTX 1080 Ti</option>
+                    <option value="7000" data-info="AMD Radeon RX 470, 4GB GDDR5">AMD Radeon RX 470</option>
+                    <option value="8000" data-info="AMD Radeon RX 480, 8GB GDDR5">AMD Radeon RX 480</option>
+                    <option value="9000" data-info="AMD Radeon RX 580, 8GB GDDR5">AMD Radeon RX 580</option>
+                    <option value="10000" data-info="AMD Radeon RX 590, 8GB GDDR5">AMD Radeon RX 590</option>
+                    <option value="4000" data-info="NVIDIA GTX 750 Ti, 2GB GDDR5">NVIDIA GTX 750 Ti</option>
+                    <option value="5000" data-info="NVIDIA GTX 760, 2GB GDDR5">NVIDIA GTX 760</option>
+                    <option value="6000" data-info="NVIDIA GTX 770, 2GB GDDR5">NVIDIA GTX 770</option>
+                    <option value="7000" data-info="NVIDIA GTX 780 Ti, 3GB GDDR5">NVIDIA GTX 780 Ti</option>
+                </select>
+            </div>
+
+            <!-- Остальные компоненты аналогично расширены -->
+            <div class="component">
+                <label for="cooler">Кулер:</label>
+                <select id="cooler" onchange="updatePrice()">
+                    <option value="0">Выберите кулер</option>
+                    <option value="500" data-info="Cooler Master Hyper 212 EVO, Intel LGA 115x / 1200, AMD AM4">Cooler Master Hyper 212 EVO</option>
+                    <option value="505" data-info="Noctua NH-D15, Intel LGA 115x / 1200 / 2066, AMD AM4">Noctua NH-D15</option>
+                    <option value="510" data-info="be quiet! Dark Rock Pro 4, Intel LGA 115x / 1200 / 2066, AMD AM4">be quiet! Dark Rock Pro 4</option>
+                    <option value="515" data-info="Corsair iCUE H100i ELITE, Intel LGA 115x / 1200, AMD AM4 (водяное)">Corsair iCUE H100i ELITE</option>
+                    <option value="520" data-info="NZXT Kraken X63, Intel LGA 115x / 1200 / 2066, AMD AM4 (водяное)">NZXT Kraken X63</option>
+                    <option value="525" data-info="Scythe Mugen 5, Intel LGA 115x / 1200, AMD AM4">Scythe Mugen 5</option>
+                    <option value="530" data-info="Arctic Freezer 34, Intel LGA 115x / 1200, AMD AM4">Arctic Freezer 34</option>
+                    <option value="535" data-info="Cooler Master MasterLiquid ML240L, Intel LGA 115x / 1200, AMD AM4 (водяное)">Cooler Master MasterLiquid ML240L</option>
+                    <option value="540" data-info="Thermaltake Water 3.0, Intel LGA 115x / 1200, AMD AM4 (водяное)">Thermaltake Water 3.0</option>
+                    <option value="545" data-info="Deepcool GAMMAXX GTE, Intel LGA 115x / 1200, AMD AM4">Deepcool GAMMAXX GTE</option>
+                    <option value="550" data-info="Cooler Master Hyper 212 Black, Intel LGA 115x / 1200, AMD AM4">Cooler Master Hyper 212 Black</option>
+                    <option value="555" data-info="be quiet! Pure Rock 2, Intel LGA 115x / 1200, AMD AM4">be quiet! Pure Rock 2</option>
+                    <option value="560" data-info="Noctua NH-U12S Redux, Intel LGA 115x / 1200, AMD AM4">Noctua NH-U12S Redux</option>
+                    <option value="565" data-info="Corsair iCUE H150i ELITE, Intel LGA 115x / 1200, AMD AM4 (водяное)">Corsair iCUE H150i ELITE</option>
+                    <option value="570" data-info="NZXT Kraken Z73, Intel LGA 115x / 1200 / 2066, AMD AM4 (водяное)">NZXT Kraken Z73</option>
+                    <option value="575" data-info="Cooler Master MasterAir MA410M, Intel LGA 115x / 1200, AMD AM4">Cooler Master MasterAir MA410M</option>
+                    <option value="580" data-info="Arctic Liquid Freezer II, Intel LGA 115x / 1200, AMD AM4 (водяное)">Arctic Liquid Freezer II</option>
+                    <option value="585" data-info="Thermaltake Floe DX RGB, Intel LGA 115x / 1200, AMD AM4 (водяное)">Thermaltake Floe DX RGB</option>
+                    <option value="590" data-info="Deepcool Castle 240EX, Intel LGA 115x / 1200, AMD AM4 (водяное)">Deepcool Castle 240EX</option>
+                    <option value="595" data-info="Noctua NH-L9x65, Intel LGA 115x / 1200, AMD AM4">Noctua NH-L9x65</option>
+                    <option value="600" data-info="be quiet! Dark Rock 4, Intel LGA 115x / 1200, AMD AM4">be quiet! Dark Rock 4</option>
+                    <option value="605" data-info="Cooler Master Hyper 212 RGB, Intel LGA 115x / 1200, AMD AM4">Cooler Master Hyper 212 RGB</option>
+                    <option value="610" data-info="Corsair Hydro H115i PRO RGB, Intel LGA 115x / 1200, AMD AM4 (водяное)">Corsair Hydro H115i PRO RGB</option>
+                    <option value="615" data-info="Scythe Fuma 2, Intel LGA 115x / 1200, AMD AM4">Scythe Fuma 2</option>
+                    <option value="620" data-info="Noctua NH-D9L, Intel LGA 115x / 1200, AMD AM4">Noctua NH-D9L</option>
+                    <option value="625" data-info="ARCTIC Freezer 50, Intel LGA 115x / 1200, AMD AM4">ARCTIC Freezer 50</option>
+                    <option value="630" data-info="MSI MAG CORELIQUID 240R, Intel LGA 115x / 1200, AMD AM4 (водяное)">MSI MAG CORELIQUID 240R</option>
+                    <option value="635" data-info="Cooler Master Hyper 212X, Intel LGA 115x / 1200, AMD AM4">Cooler Master Hyper 212X</option>
+                    <option value="640" data-info="Deepcool GAMMAXX 400, Intel LGA 115x / 1200, AMD AM4">Deepcool GAMMAXX 400</option>
+                    <option value="645" data-info="Thermaltake ToughLiquid 240, Intel LGA 115x / 1200, AMD AM4 (водяное)">Thermaltake ToughLiquid 240</option>
+                    <option value="650" data-info="Corsair Hydro H60, Intel LGA 115x / 1200, AMD AM4 (водяное)">Corsair Hydro H60</option>
+                    
+                </select>
+            </div>
+            <div class="component">
+                <label for="motherboard">Материнская плата:</label>
+                <select id="motherboard" onchange="updatePrice()">
+                    <option value="0">Выберите материнскую плату</option>
+<!-- Intel -->
+<option value="255" data-info="ASUS Z390-A PRO, LGA 1151, Intel Z390 chipset">ASUS Z390-A PRO, LGA 1151</option>
+<option value="260" data-info="MSI MPG Z490 GAMING EDGE WIFI, LGA 1200, Intel Z490 chipset">MSI MPG Z490 GAMING EDGE WIFI, LGA 1200</option>
+<option value="265" data-info="Gigabyte Z590 AORUS ULTRA, LGA 1200, Intel Z590 chipset">Gigabyte Z590 AORUS ULTRA, LGA 1200</option>
+<option value="270" data-info="ASRock B460 Steel Legend, LGA 1200, Intel B460 chipset">ASRock B460 Steel Legend, LGA 1200</option>
+<option value="275" data-info="MSI Z490-A PRO, LGA 1200, Intel Z490 chipset">MSI Z490-A PRO, LGA 1200</option>
+<option value="280" data-info="Gigabyte Z390 AORUS XTREME WATERFORCE, LGA 1151, Intel Z390 chipset">Gigabyte Z390 AORUS XTREME WATERFORCE, LGA 1151</option>
+<option value="285" data-info="ASUS TUF Z390-PLUS GAMING, LGA 1151, Intel Z390 chipset">ASUS TUF Z390-PLUS GAMING, LGA 1151</option>
+<option value="290" data-info="MSI MEG Z490 UNIFY, LGA 1200, Intel Z490 chipset">MSI MEG Z490 UNIFY, LGA 1200</option>
+<option value="295" data-info="Gigabyte Z370 AORUS Gaming 5, LGA 1151, Intel Z370 chipset">Gigabyte Z370 AORUS Gaming 5, LGA 1151</option>
+<option value="300" data-info="ASRock Z390 Phantom Gaming X, LGA 1151, Intel Z390 chipset">ASRock Z390 Phantom Gaming X, LGA 1151</option>
+
+<!-- AMD -->
+<option value="305" data-info="MSI B450M PRO-VDH MAX, AM4, AMD B450 chipset">MSI B450M PRO-VDH MAX, AM4</option>
+<option value="310" data-info="ASRock B550M PRO4, AM4, AMD B550 chipset">ASRock B550M PRO4, AM4</option>
+<option value="315" data-info="Gigabyte X570 AORUS XTREME, AM4, AMD X570 chipset">Gigabyte X570 AORUS XTREME, AM4</option>
+<option value="320" data-info="MSI MAG X570 TOMAHAWK WIFI, AM4, AMD X570 chipset">MSI MAG X570 TOMAHAWK WIFI, AM4</option>
+<option value="325" data-info="ASUS TUF Gaming X570-Plus, AM4, AMD X570 chipset">ASUS TUF Gaming X570-Plus, AM4</option>
+<option value="330" data-info="Gigabyte AORUS B550 PRO, AM4, AMD B550 chipset">Gigabyte AORUS B550 PRO, AM4</option>
+<option value="335" data-info="ASRock Z590 Steel Legend, LGA 1200, Intel Z590 chipset">ASRock Z590 Steel Legend, LGA 1200</option>
+<option value="340" data-info="MSI B550M PRO-VDH WIFI, AM4, AMD B550 chipset">MSI B550M PRO-VDH WIFI, AM4</option>
+<option value="345" data-info="ASUS Prime X570-PRO, AM4, AMD X570 chipset">ASUS Prime X570-PRO, AM4</option>
+<option value="350" data-info="Gigabyte Z490 AORUS ELITE AC, LGA 1200, Intel Z490 chipset">Gigabyte Z490 AORUS ELITE AC, LGA 1200</option>
+<option value="355" data-info="ASRock X570 Taichi, AM4, AMD X570 chipset">ASRock X570 Taichi, AM4</option>
+<option value="360" data-info="MSI MAG B550 TOMAHAWK WIFI, AM4, AMD B550 chipset">MSI MAG B550 TOMAHAWK WIFI, AM4</option>
+<option value="365" data-info="ASUS ROG Strix B450-F, AM4, AMD B450 chipset">ASUS ROG Strix B450-F, AM4</option>
+<option value="370" data-info="Gigabyte X570 AORUS MASTER, AM4, AMD X570 chipset">Gigabyte X570 AORUS MASTER, AM4</option>
+<option value="375" data-info="MSI B450-A PRO MAX, AM4, AMD B450 chipset">MSI B450-A PRO MAX, AM4</option>
+<option value="380" data-info="ASRock Z490 Extreme4, LGA 1200, Intel Z490 chipset">ASRock Z490 Extreme4, LGA 1200</option>
+<option value="385" data-info="Gigabyte B450 AORUS PRO, AM4, AMD B450 chipset">Gigabyte B450 AORUS PRO, AM4</option>
+<option value="390" data-info="MSI MAG B550M MORTAR WIFI, AM4, AMD B550 chipset">MSI MAG B550M MORTAR WIFI, AM4</option>
+<option value="395" data-info="ASUS Prime B450M-A, AM4, AMD B450 chipset">ASUS Prime B450M-A, AM4</option>
+<option value="400" data-info="ASRock Z370 Killer SLI, LGA 1151, Intel Z370 chipset">ASRock Z370 Killer SLI, LGA 1151</option>
+<option value="405" data-info="MSI X470 GAMING PRO CARBON, AM4, AMD X470 chipset">MSI X470 GAMING PRO CARBON, AM4</option>
+<option value="410" data-info="Gigabyte Z490 AORUS PRO, LGA 1200, Intel Z490 chipset">Gigabyte Z490 AORUS PRO, LGA 1200</option>
+<option value="415" data-info="ASUS TUF B450M-PLUS GAMING, AM4, AMD B450 chipset">ASUS TUF B450M-PLUS GAMING, AM4</option>
+<option value="420" data-info="MSI MAG Z490 TOMAHAWK WIFI, LGA 1200, Intel Z490 chipset">MSI MAG Z490 TOMAHAWK WIFI, LGA 1200</option>
+<option value="425" data-info="ASUS ROG Strix B550-E, AM4, AMD B550 chipset">ASUS ROG Strix B550-E, AM4</option>
+<option value="430" data-info="Gigabyte Z590 AORUS ELITE, LGA 1200, Intel Z590 chipset">Gigabyte Z590 AORUS ELITE, LGA 1200</option>
+<option value="435" data-info="MSI MPG B550 GAMING EDGE WIFI, AM4, AMD B550 chipset">MSI MPG B550 GAMING EDGE WIFI, AM4</option>
+<option value="440" data-info="ASRock B450 Pro4, AM4, AMD B450 chipset">ASRock B450 Pro4, AM4</option>
+<option value="445" data-info="MSI Z390-A PRO, LGA 1151, Intel Z390 chipset">MSI Z390-A PRO, LGA 1151</option>
+<option value="450" data-info="Gigabyte Z590 AORUS PRO, LGA 1200, Intel Z590 chipset">Gigabyte Z590 AORUS PRO, LGA 1200</option>
+<option value="455" data-info="ASUS ROG Strix Z490-F, LGA 1200, Intel Z490 chipset">ASUS ROG Strix Z490-F, LGA 1200</option>
+<option value="460" data-info="MSI MAG B550M MORTAR WIFI, AM4, AMD B550 chipset">MSI MAG B550M MORTAR WIFI, AM4</option>
+
+                </select>
+            </div>
+            <div class="component">
+                <label for="ram">Оперативная память:</label>
+                <select id="ram" onchange="updatePrice()">
+                    <option value="0">Выберите оперативную память</option>
+<!-- Samsung -->
+<option value="10" data-info="Samsung DDR4, 8GB, 2400MHz">Samsung DDR4 8GB</option>
+<option value="15" data-info="Samsung DDR4, 16GB, 2666MHz">Samsung DDR4 16GB</option>
+<option value="20" data-info="Samsung DDR4, 16GB, 3000MHz">Samsung DDR4 16GB</option>
+<option value="25" data-info="Samsung DDR4, 32GB, 3200MHz">Samsung DDR4 32GB</option>
+<option value="30" data-info="Samsung DDR4, 8GB, 3600MHz">Samsung DDR4 8GB</option>
+<option value="35" data-info="Samsung DDR4, 16GB, 3600MHz">Samsung DDR4 16GB</option>
+<option value="40" data-info="Samsung DDR4, 32GB, 4000MHz">Samsung DDR4 32GB</option>
+<option value="45" data-info="Samsung DDR4, 16GB, 4400MHz">Samsung DDR4 16GB</option>
+<option value="50" data-info="Samsung DDR4, 32GB, 4600MHz">Samsung DDR4 32GB</option>
+<option value="55" data-info="Samsung DDR5, 16GB, 4800MHz">Samsung DDR5 16GB</option>
+<option value="60" data-info="Samsung DDR5, 32GB, 5200MHz">Samsung DDR5 32GB</option>
+<option value="65" data-info="Samsung DDR5, 32GB, 6000MHz">Samsung DDR5 32GB</option>
+<option value="70" data-info="Samsung DDR5, 64GB, 6400MHz">Samsung DDR5 64GB</option>
+<option value="75" data-info="Samsung DDR3, 8GB, 1600MHz">Samsung DDR3 8GB</option>
+<option value="80" data-info="Samsung DDR3, 16GB, 1866MHz">Samsung DDR3 16GB</option>
+<option value="85" data-info="Samsung DDR3, 16GB, 2133MHz">Samsung DDR3 16GB</option>
+<option value="90" data-info="Samsung DDR3, 8GB, 1333MHz">Samsung DDR3 8GB</option>
+<option value="95" data-info="Samsung DDR4, 8GB, 2133MHz">Samsung DDR4 8GB</option>
+<option value="100" data-info="Samsung DDR5, 16GB, 5600MHz">Samsung DDR5 16GB</option>
+<option value="105" data-info="Samsung DDR5, 32GB, 6400MHz">Samsung DDR5 32GB</option>
+<option value="110" data-info="Samsung DDR4, 64GB, 3600MHz">Samsung DDR4 64GB</option>
+
+<!-- Kingston -->
+<option value="10" data-info="Kingston HyperX Fury, 8GB, 2666MHz">Kingston HyperX Fury 8GB</option>
+<option value="15" data-info="Kingston HyperX Fury, 16GB, 3000MHz">Kingston HyperX Fury 16GB</option>
+<option value="20" data-info="Kingston HyperX Predator, 16GB, 3200MHz">Kingston HyperX Predator 16GB</option>
+<option value="25" data-info="Kingston Fury Beast, 16GB, 3600MHz">Kingston Fury Beast 16GB</option>
+<option value="30" data-info="Kingston HyperX Impact, 32GB, 3200MHz">Kingston HyperX Impact 32GB</option>
+<option value="35" data-info="Kingston HyperX Predator, 32GB, 3600MHz">Kingston HyperX Predator 32GB</option>
+<option value="40" data-info="Kingston Fury Renegade, 32GB, 4000MHz">Kingston Fury Renegade 32GB</option>
+<option value="45" data-info="Kingston HyperX Impact, 16GB, 3200MHz">Kingston HyperX Impact 16GB</option>
+<option value="50" data-info="Kingston HyperX Fury, 8GB, 2400MHz">Kingston HyperX Fury 8GB</option>
+<option value="55" data-info="Kingston DDR5, 16GB, 4800MHz">Kingston DDR5 16GB</option>
+<option value="60" data-info="Kingston DDR5, 32GB, 5200MHz">Kingston DDR5 32GB</option>
+<option value="65" data-info="Kingston DDR5, 32GB, 6000MHz">Kingston DDR5 32GB</option>
+<option value="70" data-info="Kingston DDR5, 64GB, 6400MHz">Kingston DDR5 64GB</option>
+<option value="75" data-info="Kingston DDR3, 8GB, 1333MHz">Kingston DDR3 8GB</option>
+<option value="80" data-info="Kingston DDR3, 16GB, 1866MHz">Kingston DDR3 16GB</option>
+<option value="85" data-info="Kingston DDR3, 16GB, 2133MHz">Kingston DDR3 16GB</option>
+<option value="90" data-info="Kingston DDR3, 8GB, 1333MHz">Kingston DDR3 8GB</option>
+<option value="95" data-info="Kingston DDR4, 8GB, 2133MHz">Kingston DDR4 8GB</option>
+<option value="100" data-info="Kingston DDR5, 16GB, 5600MHz">Kingston DDR5 16GB</option>
+<option value="105" data-info="Kingston DDR5, 32GB, 6400MHz">Kingston DDR5 32GB</option>
+<option value="110" data-info="Kingston DDR4, 64GB, 3600MHz">Kingston DDR4 64GB</option>
+<option value="115" data-info="Kingston HyperX, 8GB, 2933MHz">Kingston HyperX 8GB</option>
+<option value="120" data-info="Kingston Fury, 8GB, 2933MHz">Kingston Fury 8GB</option>
+<option value="125" data-info="Kingston Fury Beast, 32GB, 4000MHz">Kingston Fury Beast 32GB</option>
+<option value="130" data-info="Kingston HyperX, 16GB, 2933MHz">Kingston HyperX 16GB</option>
+
+                </select>
+            </div>
+            <div class="component">
+                <label for="ssd">Накопитель SSD:</label>
+                <select id="ssd" onchange="updatePrice()">
+                    <option value="0">Выберите SSD</option>
+<!-- Samsung -->
+<option value="1000" data-info="Samsung 860 EVO, 250GB, 550 MB/s">Samsung 860 EVO 250GB</option>
+<option value="1500" data-info="Samsung 860 EVO, 500GB, 550 MB/s">Samsung 860 EVO 500GB</option>
+<option value="2000" data-info="Samsung 860 EVO, 1TB, 550 MB/s">Samsung 860 EVO 1TB</option>
+<option value="2500" data-info="Samsung 970 EVO Plus, 250GB, 3500 MB/s">Samsung 970 EVO Plus 250GB</option>
+<option value="3000" data-info="Samsung 970 EVO Plus, 500GB, 3500 MB/s">Samsung 970 EVO Plus 500GB</option>
+<option value="3500" data-info="Samsung 970 EVO Plus, 1TB, 3500 MB/s">Samsung 970 EVO Plus 1TB</option>
+<option value="4000" data-info="Samsung 980 PRO, 500GB, 7000 MB/s">Samsung 980 PRO 500GB</option>
+<option value="4500" data-info="Samsung 980 PRO, 1TB, 7000 MB/s">Samsung 980 PRO 1TB</option>
+<option value="5000" data-info="Samsung 980 PRO, 2TB, 7000 MB/s">Samsung 980 PRO 2TB</option>
+<option value="5500" data-info="Samsung 970 EVO, 500GB, 3400 MB/s">Samsung 970 EVO 500GB</option>
+<option value="6000" data-info="Samsung 970 EVO, 1TB, 3400 MB/s">Samsung 970 EVO 1TB</option>
+
+<!-- Western Digital (WD) -->
+<option value="1000" data-info="WD Blue 3D NAND, 250GB, 560 MB/s">WD Blue 3D NAND 250GB</option>
+<option value="1500" data-info="WD Blue 3D NAND, 500GB, 560 MB/s">WD Blue 3D NAND 500GB</option>
+<option value="2000" data-info="WD Blue 3D NAND, 1TB, 560 MB/s">WD Blue 3D NAND 1TB</option>
+<option value="2500" data-info="WD Black SN850, 500GB, 7000 MB/s">WD Black SN850 500GB</option>
+<option value="3000" data-info="WD Black SN850, 1TB, 7000 MB/s">WD Black SN850 1TB</option>
+<option value="3500" data-info="WD Black SN850, 2TB, 7000 MB/s">WD Black SN850 2TB</option>
+<option value="4000" data-info="WD Blue SN550, 500GB, 2400 MB/s">WD Blue SN550 500GB</option>
+<option value="4500" data-info="WD Blue SN550, 1TB, 2400 MB/s">WD Blue SN550 1TB</option>
+<option value="5000" data-info="WD Red, 1TB, 540 MB/s">WD Red 1TB</option>
+<option value="5500" data-info="WD Red, 2TB, 540 MB/s">WD Red 2TB</option>
+
+<!-- Crucial -->
+<option value="1000" data-info="Crucial MX500, 250GB, 560 MB/s">Crucial MX500 250GB</option>
+<option value="1500" data-info="Crucial MX500, 500GB, 560 MB/s">Crucial MX500 500GB</option>
+<option value="2000" data-info="Crucial MX500, 1TB, 560 MB/s">Crucial MX500 1TB</option>
+<option value="2500" data-info="Crucial P5, 500GB, 3400 MB/s">Crucial P5 500GB</option>
+<option value="3000" data-info="Crucial P5, 1TB, 3400 MB/s">Crucial P5 1TB</option>
+<option value="3500" data-info="Crucial P5, 2TB, 3400 MB/s">Crucial P5 2TB</option>
+<option value="4000" data-info="Crucial P5 Plus, 500GB, 6600 MB/s">Crucial P5 Plus 500GB</option>
+<option value="4500" data-info="Crucial P5 Plus, 1TB, 6600 MB/s">Crucial P5 Plus 1TB</option>
+<option value="5000" data-info="Crucial P5 Plus, 2TB, 6600 MB/s">Crucial P5 Plus 2TB</option>
+<option value="5500" data-info="Crucial BX500, 240GB, 540 MB/s">Crucial BX500 240GB</option>
+<option value="6000" data-info="Crucial BX500, 480GB, 540 MB/s">Crucial BX500 480GB</option>
+
+<!-- Kingston -->
+<option value="1000" data-info="Kingston A2000, 250GB, 2200 MB/s">Kingston A2000 250GB</option>
+<option value="1500" data-info="Kingston A2000, 500GB, 2200 MB/s">Kingston A2000 500GB</option>
+<option value="2000" data-info="Kingston A2000, 1TB, 2200 MB/s">Kingston A2000 1TB</option>
+<option value="2500" data-info="Kingston KC2500, 500GB, 3500 MB/s">Kingston KC2500 500GB</option>
+<option value="3000" data-info="Kingston KC2500, 1TB, 3500 MB/s">Kingston KC2500 1TB</option>
+<option value="3500" data-info="Kingston KC2500, 2TB, 3500 MB/s">Kingston KC2500 2TB</option>
+<option value="4000" data-info="Kingston NV1, 500GB, 2100 MB/s">Kingston NV1 500GB</option>
+<option value="4500" data-info="Kingston NV1, 1TB, 2100 MB/s">Kingston NV1 1TB</option>
+<option value="5000" data-info="Kingston NV2, 500GB, 3500 MB/s">Kingston NV2 500GB</option>
+<option value="5500" data-info="Kingston NV2, 1TB, 3500 MB/s">Kingston NV2 1TB</option>
+
+<!-- Seagate -->
+<option value="1000" data-info="Seagate BarraCuda, 500GB, 560 MB/s">Seagate BarraCuda 500GB</option>
+<option value="1500" data-info="Seagate BarraCuda, 1TB, 560 MB/s">Seagate BarraCuda 1TB</option>
+<option value="2000" data-info="Seagate FireCuda, 500GB, 3400 MB/s">Seagate FireCuda 500GB</option>
+<option value="2500" data-info="Seagate FireCuda, 1TB, 3400 MB/s">Seagate FireCuda 1TB</option>
+<option value="3000" data-info="Seagate FireCuda, 2TB, 3400 MB/s">Seagate FireCuda 2TB</option>
+<option value="3500" data-info="Seagate FireCuda 530, 500GB, 7300 MB/s">Seagate FireCuda 530 500GB</option>
+<option value="4000" data-info="Seagate FireCuda 530, 1TB, 7300 MB/s">Seagate FireCuda 530 1TB</option>
+<option value="4500" data-info="Seagate FireCuda 530, 2TB, 7300 MB/s">Seagate FireCuda 530 2TB</option>
+<option value="5000" data-info="Seagate One Touch, 500GB, 550 MB/s">Seagate One Touch 500GB</option>
+<option value="5500" data-info="Seagate One Touch, 1TB, 550 MB/s">Seagate One Touch 1TB</option>
+
+                </select>
+            </div>
+            <div class="component">
+                <label for="hdd">Накопитель HDD:</label>
+                <select id="hdd" onchange="updatePrice()">
+                    <option value="0">Выберите HDD</option>
+<!-- Seagate -->
+<option value="1000" data-info="Seagate Barracuda, 1TB, 7200 RPM">Seagate Barracuda 1TB</option>
+<option value="1500" data-info="Seagate Barracuda, 2TB, 7200 RPM">Seagate Barracuda 2TB</option>
+<option value="2000" data-info="Seagate Barracuda, 3TB, 7200 RPM">Seagate Barracuda 3TB</option>
+<option value="2500" data-info="Seagate Barracuda, 4TB, 7200 RPM">Seagate Barracuda 4TB</option>
+<option value="3000" data-info="Seagate IronWolf, 1TB, 7200 RPM">Seagate IronWolf 1TB</option>
+<option value="3500" data-info="Seagate IronWolf, 2TB, 7200 RPM">Seagate IronWolf 2TB</option>
+<option value="4000" data-info="Seagate IronWolf, 4TB, 7200 RPM">Seagate IronWolf 4TB</option>
+<option value="5000" data-info="Seagate IronWolf, 6TB, 7200 RPM">Seagate IronWolf 6TB</option>
+<option value="6000" data-info="Seagate SkyHawk, 4TB, 5900 RPM">Seagate SkyHawk 4TB</option>
+<option value="7000" data-info="Seagate Exos, 10TB, 7200 RPM">Seagate Exos 10TB</option>
+
+<!-- Western Digital -->
+<option value="1000" data-info="WD Blue, 1TB, 7200 RPM">WD Blue 1TB</option>
+<option value="1500" data-info="WD Blue, 2TB, 7200 RPM">WD Blue 2TB</option>
+<option value="2000" data-info="WD Blue, 3TB, 7200 RPM">WD Blue 3TB</option>
+<option value="2500" data-info="WD Blue, 4TB, 7200 RPM">WD Blue 4TB</option>
+<option value="3000" data-info="WD Black, 1TB, 7200 RPM">WD Black 1TB</option>
+<option value="3500" data-info="WD Black, 2TB, 7200 RPM">WD Black 2TB</option>
+<option value="4000" data-info="WD Black, 4TB, 7200 RPM">WD Black 4TB</option>
+<option value="5000" data-info="WD Red, 2TB, 5400 RPM">WD Red 2TB</option>
+<option value="6000" data-info="WD Red, 3TB, 5400 RPM">WD Red 3TB</option>
+<option value="7000" data-info="WD Red, 4TB, 5400 RPM">WD Red 4TB</option>
+
+<!-- Toshiba -->
+<option value="1000" data-info="Toshiba P300, 1TB, 7200 RPM">Toshiba P300 1TB</option>
+<option value="1500" data-info="Toshiba P300, 2TB, 7200 RPM">Toshiba P300 2TB</option>
+<option value="2000" data-info="Toshiba P300, 3TB, 7200 RPM">Toshiba P300 3TB</option>
+<option value="2500" data-info="Toshiba P300, 4TB, 7200 RPM">Toshiba P300 4TB</option>
+<option value="3000" data-info="Toshiba X300, 4TB, 7200 RPM">Toshiba X300 4TB</option>
+<option value="3500" data-info="Toshiba X300, 6TB, 7200 RPM">Toshiba X300 6TB</option>
+<option value="4000" data-info="Toshiba N300, 4TB, 7200 RPM">Toshiba N300 4TB</option>
+
+<!-- HGST -->
+<option value="1000" data-info="HGST Deskstar, 1TB, 7200 RPM">HGST Deskstar 1TB</option>
+<option value="1500" data-info="HGST Deskstar, 2TB, 7200 RPM">HGST Deskstar 2TB</option>
+<option value="2000" data-info="HGST Deskstar, 3TB, 7200 RPM">HGST Deskstar 3TB</option>
+<option value="2500" data-info="HGST Deskstar, 4TB, 7200 RPM">HGST Deskstar 4TB</option>
+<option value="3000" data-info="HGST Ultrastar, 4TB, 7200 RPM">HGST Ultrastar 4TB</option>
+<option value="3500" data-info="HGST Ultrastar, 6TB, 7200 RPM">HGST Ultrastar 6TB</option>
+
+<!-- Seagate NAS -->
+<option value="1000" data-info="Seagate IronWolf Pro, 1TB, 7200 RPM">Seagate IronWolf Pro 1TB</option>
+<option value="1500" data-info="Seagate IronWolf Pro, 2TB, 7200 RPM">Seagate IronWolf Pro 2TB</option>
+<option value="2000" data-info="Seagate IronWolf Pro, 3TB, 7200 RPM">Seagate IronWolf Pro 3TB</option>
+<option value="2500" data-info="Seagate IronWolf Pro, 4TB, 7200 RPM">Seagate IronWolf Pro 4TB</option>
+<option value="3000" data-info="Seagate IronWolf Pro, 6TB, 7200 RPM">Seagate IronWolf Pro 6TB</option>
+<option value="3500" data-info="Seagate IronWolf Pro, 8TB, 7200 RPM">Seagate IronWolf Pro 8TB</option>
+<option value="4000" data-info="Seagate IronWolf Pro, 10TB, 7200 RPM">Seagate IronWolf Pro 10TB</option>
+
+                </select>
+            </div>
+            <div class="component">
+                <label for="psu">Блок питания:</label>
+                <select id="psu" onchange="updatePrice()">
+                    <option value="0">Выберите блок питания</option>
+<!-- Corsair -->
+<option value="500" data-info="Corsair CV550, 550W, 80+ Bronze">Corsair CV550 550W</option>
+<option value="600" data-info="Corsair CV650, 650W, 80+ Bronze">Corsair CV650 650W</option>
+<option value="700" data-info="Corsair RM750, 750W, 80+ Gold">Corsair RM750 750W</option>
+<option value="800" data-info="Corsair RM850x, 850W, 80+ Gold">Corsair RM850x 850W</option>
+<option value="1000" data-info="Corsair HX1000, 1000W, 80+ Platinum">Corsair HX1000 1000W</option>
+<option value="1200" data-info="Corsair AX1200i, 1200W, 80+ Titanium">Corsair AX1200i 1200W</option>
+
+<!-- EVGA -->
+<option value="500" data-info="EVGA 500 W1, 500W, 80+ White">EVGA 500 W1 500W</option>
+<option value="600" data-info="EVGA 600 W1, 600W, 80+ White">EVGA 600 W1 600W</option>
+<option value="700" data-info="EVGA SuperNOVA 750 G5, 750W, 80+ Gold">EVGA SuperNOVA 750 G5 750W</option>
+<option value="800" data-info="EVGA SuperNOVA 850 G5, 850W, 80+ Gold">EVGA SuperNOVA 850 G5 850W</option>
+<option value="1000" data-info="EVGA SuperNOVA 1000 G5, 1000W, 80+ Gold">EVGA SuperNOVA 1000 G5 1000W</option>
+<option value="1200" data-info="EVGA SuperNOVA 1200 T2, 1200W, 80+ Titanium">EVGA SuperNOVA 1200 T2 1200W</option>
+
+<!-- Thermaltake -->
+<option value="500" data-info="Thermaltake Smart RGB 500W, 80+ White">Thermaltake Smart RGB 500W</option>
+<option value="600" data-info="Thermaltake Smart RGB 600W, 80+ White">Thermaltake Smart RGB 600W</option>
+<option value="700" data-info="Thermaltake Toughpower GX1 700W, 80+ Gold">Thermaltake Toughpower GX1 700W</option>
+<option value="800" data-info="Thermaltake Toughpower GF1 850W, 80+ Gold">Thermaltake Toughpower GF1 850W</option>
+<option value="1000" data-info="Thermaltake Toughpower PF1 ARGB 1000W, 80+ Platinum">Thermaltake Toughpower PF1 ARGB 1000W</option>
+<option value="1200" data-info="Thermaltake Toughpower iRGB Plus 1200W, 80+ Titanium">Thermaltake Toughpower iRGB Plus 1200W</option>
+
+<!-- Cooler Master -->
+<option value="500" data-info="Cooler Master MWE Bronze 550W, 80+ Bronze">Cooler Master MWE Bronze 550W</option>
+<option value="600" data-info="Cooler Master MWE Gold 650W, 80+ Gold">Cooler Master MWE Gold 650W</option>
+<option value="700" data-info="Cooler Master MWE Gold 750W, 80+ Gold">Cooler Master MWE Gold 750W</option>
+<option value="800" data-info="Cooler Master MWE Gold 850W, 80+ Gold">Cooler Master MWE Gold 850W</option>
+<option value="1000" data-info="Cooler Master MWE Platinum 1000W, 80+ Platinum">Cooler Master MWE Platinum 1000W</option>
+<option value="1200" data-info="Cooler Master MWE Titanium 1200W, 80+ Titanium">Cooler Master MWE Titanium 1200W</option>
+
+<!-- Be Quiet! -->
+<option value="500" data-info="Be Quiet! System Power 9 500W, 80+ Bronze">Be Quiet! System Power 9 500W</option>
+<option value="600" data-info="Be Quiet! System Power 9 600W, 80+ Bronze">Be Quiet! System Power 9 600W</option>
+<option value="700" data-info="Be Quiet! Pure Power 11 700W, 80+ Gold">Be Quiet! Pure Power 11 700W</option>
+<option value="800" data-info="Be Quiet! Dark Power 12 850W, 80+ Platinum">Be Quiet! Dark Power 12 850W</option>
+<option value="1000" data-info="Be Quiet! Dark Power 12 1000W, 80+ Platinum">Be Quiet! Dark Power 12 1000W</option>
+<option value="1200" data-info="Be Quiet! Dark Power 12 1200W, 80+ Platinum">Be Quiet! Dark Power 12 1200W</option>
+
+<!-- XFX -->
+<option value="500" data-info="XFX TS Series 550W, 80+ Bronze">XFX TS Series 550W</option>
+<option value="600" data-info="XFX TS Series 650W, 80+ Bronze">XFX TS Series 650W</option>
+<option value="700" data-info="XFX ProSeries 750W, 80+ Gold">XFX ProSeries 750W</option>
+<option value="800" data-info="XFX ProSeries 850W, 80+ Gold">XFX ProSeries 850W</option>
+<option value="1000" data-info="XFX ProSeries 1000W, 80+ Gold">XFX ProSeries 1000W</option>
+<option value="1200" data-info="XFX ProSeries 1200W, 80+ Platinum">XFX ProSeries 1200W</option>
+
+                </select>
+            </div>
+            <div class="component">
+                <label for="case">Корпус:</label>
+                <select id="case" onchange="updatePrice()">
+                    <option value="0">Выберите корпус</option>
+<!-- NZXT -->
+<option value="50" data-info="NZXT H510, Mid Tower, ATX">NZXT H510</option>
+<option value="60" data-info="NZXT H510 Elite, Mid Tower, ATX">NZXT H510 Elite</option>
+<option value="70" data-info="NZXT H7 Flow, Mid Tower, ATX">NZXT H7 Flow</option>
+<option value="80" data-info="NZXT H7, Mid Tower, ATX">NZXT H7</option>
+
+<!-- Cooler Master -->
+<option value="50" data-info="Cooler Master MasterBox Q300L, Micro ATX">Cooler Master MasterBox Q300L</option>
+<option value="60" data-info="Cooler Master MasterBox MB311L, Micro ATX">Cooler Master MasterBox MB311L</option>
+<option value="70" data-info="Cooler Master MasterBox Q500L, ATX">Cooler Master MasterBox Q500L</option>
+<option value="80" data-info="Cooler Master H500, ATX">Cooler Master H500</option>
+<option value="90" data-info="Cooler Master Cosmos C700P, Full Tower">Cooler Master Cosmos C700P</option>
+
+<!-- Corsair -->
+<option value="50" data-info="Corsair 4000D, Mid Tower, ATX">Corsair 4000D</option>
+<option value="60" data-info="Corsair 5000D, Mid Tower, ATX">Corsair 5000D</option>
+<option value="70" data-info="Corsair iCUE 4000X, Mid Tower, ATX">Corsair iCUE 4000X</option>
+<option value="80" data-info="Corsair iCUE 5000X, Mid Tower, ATX">Corsair iCUE 5000X</option>
+
+<!-- Phanteks -->
+<option value="50" data-info="Phanteks Eclipse P300A, Mid Tower, ATX">Phanteks Eclipse P300A</option>
+<option value="60" data-info="Phanteks Eclipse P360A, Mid Tower, ATX">Phanteks Eclipse P360A</option>
+<option value="70" data-info="Phanteks Enthoo Pro, Full Tower">Phanteks Enthoo Pro</option>
+
+<!-- Fractal Design -->
+<option value="50" data-info="Fractal Design Meshify C, Mid Tower, ATX">Fractal Design Meshify C</option>
+<option value="60" data-info="Fractal Design Define 7, Mid Tower, ATX">Fractal Design Define 7</option>
+<option value="70" data-info="Fractal Design Torrent, ATX">Fractal Design Torrent</option>
+<option value="80" data-info="Fractal Design Define R5, Mid Tower, ATX">Fractal Design Define R5</option>
+
+<!-- Be Quiet! -->
+<option value="50" data-info="Be Quiet! Pure Base 500, Mid Tower, ATX">Be Quiet! Pure Base 500</option>
+<option value="60" data-info="Be Quiet! Dark Base 700, Mid Tower, ATX">Be Quiet! Dark Base 700</option>
+<option value="70" data-info="Be Quiet! Silent Base 802, Mid Tower, ATX">Be Quiet! Silent Base 802</option>
+
+<!-- Lian Li -->
+<option value="50" data-info="Lian Li PC-O11 Dynamic, Mid Tower, ATX">Lian Li PC-O11 Dynamic</option>
+<option value="60" data-info="Lian Li PC-011D XL, Full Tower, ATX">Lian Li PC-011D XL</option>
+<option value="70" data-info="Lian Li PC-011D Razer Edition, Mid Tower, ATX">Lian Li PC-011D Razer Edition</option>
+
+<!-- Thermaltake -->
+<option value="50" data-info="Thermaltake Versa H21, Mid Tower, ATX">Thermaltake Versa H21</option>
+<option value="60" data-info="Thermaltake V200, Mid Tower, ATX">Thermaltake V200</option>
+<option value="70" data-info="Thermaltake Core P3, Open Frame, ATX">Thermaltake Core P3</option>
+<option value="80" data-info="Thermaltake Tower 900, Full Tower, ATX">Thermaltake Tower 900</option>
+
+<!-- MSI -->
+<option value="50" data-info="MSI MAG Forge 100R, Mid Tower, ATX">MSI MAG Forge 100R</option>
+<option value="60" data-info="MSI MPG Gungnir 110R, Mid Tower, ATX">MSI MPG Gungnir 110R</option>
+<option value="70" data-info="MSI MAG Vampiric 011, Mid Tower, ATX">MSI MAG Vampiric 011</option>
+
+<!-- SilverStone -->
+<option value="50" data-info="SilverStone Precision PS15, Mid Tower, ATX">SilverStone Precision PS15</option>
+<option value="60" data-info="SilverStone Sugo 14, Mini ITX">SilverStone Sugo 14</option>
+<option value="70" data-info="SilverStone Fortress FT05, Full Tower, ATX">SilverStone Fortress FT05</option>
+
+                </select>
+            </div>
+            <div class="component">
+                <label for="fans">Дополнительные вентиляторы:</label>
+                <select id="fans" onchange="updatePrice()">
+                    <option value="0">Выберите вентиляторы</option>
+<!-- Noctua -->
+<option value="10" data-info="Noctua NF-A12x25, 120mm, 4-pin">Noctua NF-A12x25</option>
+<option value="15" data-info="Noctua NF-F12, 120mm, 4-pin">Noctua NF-F12</option>
+<option value="20" data-info="Noctua NF-S12A, 120mm, 3-pin">Noctua NF-S12A</option>
+<option value="25" data-info="Noctua NF-A14, 140mm, 4-pin">Noctua NF-A14</option>
+
+<!-- Corsair -->
+<option value="10" data-info="Corsair AF120, 120mm, 3-pin">Corsair AF120</option>
+<option value="15" data-info="Corsair AF140, 140mm, 3-pin">Corsair AF140</option>
+<option value="20" data-info="Corsair LL120, 120mm, 4-pin">Corsair LL120</option>
+<option value="25" data-info="Corsair ML140, 140mm, 4-pin">Corsair ML140</option>
+
+<!-- Cooler Master -->
+<option value="10" data-info="Cooler Master SickleFlow 120, 120mm, 4-pin">Cooler Master SickleFlow 120</option>
+<option value="15" data-info="Cooler Master MasterFan MF120, 120mm, 3-pin">Cooler Master MasterFan MF120</option>
+<option value="20" data-info="Cooler Master MF140, 140mm, 4-pin">Cooler Master MF140</option>
+<option value="25" data-info="Cooler Master Hyper 212 Fan, 120mm, 4-pin">Cooler Master Hyper 212 Fan</option>
+
+<!-- Be Quiet! -->
+<option value="10" data-info="Be Quiet! Pure Wings 2, 120mm, 3-pin">Be Quiet! Pure Wings 2</option>
+<option value="15" data-info="Be Quiet! Silent Wings 3, 120mm, 4-pin">Be Quiet! Silent Wings 3</option>
+<option value="20" data-info="Be Quiet! Shadow Wings 2, 140mm, 3-pin">Be Quiet! Shadow Wings 2</option>
+<option value="25" data-info="Be Quiet! Silent Wings 3, 140mm, 4-pin">Be Quiet! Silent Wings 3</option>
+
+<!-- Thermaltake -->
+<option value="10" data-info="Thermaltake Riing 12, 120mm, 4-pin">Thermaltake Riing 12</option>
+<option value="15" data-info="Thermaltake Riing 14, 140mm, 4-pin">Thermaltake Riing 14</option>
+<option value="20" data-info="Thermaltake ToughFan 12, 120mm, 4-pin">Thermaltake ToughFan 12</option>
+<option value="25" data-info="Thermaltake Pure 12, 120mm, 3-pin">Thermaltake Pure 12</option>
+
+<!-- Arctic -->
+<option value="10" data-info="Arctic P12, 120mm, 3-pin">Arctic P12</option>
+<option value="15" data-info="Arctic P14, 140mm, 3-pin">Arctic P14</option>
+<option value="20" data-info="Arctic BioniX P120, 120mm, 4-pin">Arctic BioniX P120</option>
+<option value="25" data-info="Arctic P120, 120mm, 4-pin">Arctic P120</option>
+
+<!-- MSI -->
+<option value="10" data-info="MSI MAG Series, 120mm, 4-pin">MSI MAG Series</option>
+<option value="15" data-info="MSI TORX 4.0, 120mm, 4-pin">MSI TORX 4.0</option>
+<option value="20" data-info="MSI ARGB Fan, 120mm, 3-pin">MSI ARGB Fan</option>
+
+<!-- NZXT -->
+<option value="10" data-info="NZXT Aer P120, 120mm, 4-pin">NZXT Aer P120</option>
+<option value="15" data-info="NZXT Aer RGB 2, 120mm, 3-pin">NZXT Aer RGB 2</option>
+<option value="20" data-info="NZXT Aer F120, 120mm, 3-pin">NZXT Aer F120</option>
+
+<!-- Fractal Design -->
+<option value="10" data-info="Fractal Design Dynamic X2, 120mm, 3-pin">Fractal Design Dynamic X2</option>
+<option value="15" data-info="Fractal Design Venturi HP-12, 120mm, 4-pin">Fractal Design Venturi HP-12</option>
+<option value="20" data-info="Fractal Design Venturi HP-14, 140mm, 4-pin">Fractal Design Venturi HP-14</option>
+
+<!-- SilverStone -->
+<option value="10" data-info="SilverStone Air Penetrator 120mm, 120mm, 4-pin">SilverStone Air Penetrator 120mm</option>
+<option value="15" data-info="SilverStone FM121, 120mm, 3-pin">SilverStone FM121</option>
+<option value="20" data-info="SilverStone SST-AP121, 120mm, 3-pin">SilverStone SST-AP121</option>
+<option value="25" data-info="SilverStone SST-FM141, 140mm, 3-pin">SilverStone SST-FM141</option>
+
+                </select>
+            </div>
+            <div class="component">
+                <label for="cables">Дополнительные кабеля:</label>
+                <select id="cables" onchange="updatePrice()">
+                    <option value="0">Выберите кабеля</option>
+<!-- Corsair -->
+<option value="10" data-info="Corsair Premium Sleeved Cable Kit, 24-pin ATX, Black/Red">Corsair Premium Sleeved Cable Kit (24-pin ATX)</option>
+<option value="15" data-info="Corsair Cable Extension Kit, 24-pin ATX, Black/White">Corsair Cable Extension Kit (24-pin ATX)</option>
+<option value="20" data-info="Corsair Type 4, 8-pin EPS, Black/Yellow">Corsair Type 4 (8-pin EPS)</option>
+<option value="25" data-info="Corsair Type 3, 6+2 PCIe, Black/Blue">Corsair Type 3 (6+2 PCIe)</option>
+
+<!-- CableMod -->
+<option value="10" data-info="CableMod Pro ModMesh Cable Extension, 24-pin ATX, Black">CableMod Pro ModMesh (24-pin ATX)</option>
+<option value="15" data-info="CableMod Custom PSU Cable Kit, 8-pin EPS, Red/Black">CableMod Custom PSU Cable Kit (8-pin EPS)</option>
+<option value="20" data-info="CableMod Pro ModMesh, 6+2 PCIe, Black/Red">CableMod Pro ModMesh (6+2 PCIe)</option>
+<option value="25" data-info="CableMod Classic Extension Cable Kit, 6+2 PCIe, White/Black">CableMod Classic Extension Cable Kit (6+2 PCIe)</option>
+
+<!-- Thermaltake -->
+<option value="10" data-info="Thermaltake RGB Cable Extension Kit, 24-pin ATX, RGB">Thermaltake RGB Cable Extension Kit (24-pin ATX)</option>
+<option value="15" data-info="Thermaltake Toughpower Cable Kit, 8-pin EPS, Black">Thermaltake Toughpower Cable Kit (8-pin EPS)</option>
+<option value="20" data-info="Thermaltake Flexi Cable Kit, 6+2 PCIe, Blue/White">Thermaltake Flexi Cable Kit (6+2 PCIe)</option>
+<option value="25" data-info="Thermaltake PCIe Cable, 6+2, Black">Thermaltake PCIe Cable (6+2)</option>
+
+<!-- Phanteks -->
+<option value="10" data-info="Phanteks 24-pin ATX Extension Cable, Black">Phanteks 24-pin ATX Extension Cable</option>
+<option value="15" data-info="Phanteks Premium PSU Cable Kit, 8-pin EPS, White/Black">Phanteks Premium PSU Cable Kit (8-pin EPS)</option>
+<option value="20" data-info="Phanteks 6+2 PCIe Cable Extension, Red/Black">Phanteks 6+2 PCIe Cable Extension</option>
+<option value="25" data-info="Phanteks Custom PSU Cable Kit, 6+2 PCIe, White">Phanteks Custom PSU Cable Kit (6+2 PCIe)</option>
+
+<!-- NZXT -->
+<option value="10" data-info="NZXT 24-pin ATX Cable Extension, Black/Red">NZXT 24-pin ATX Cable Extension</option>
+<option value="15" data-info="NZXT PSU Cable Extension Kit, 8-pin EPS, Black/White">NZXT PSU Cable Extension Kit (8-pin EPS)</option>
+<option value="20" data-info="NZXT Cable Extension, 6+2 PCIe, Black/Blue">NZXT Cable Extension (6+2 PCIe)</option>
+
+<!-- Be Quiet! -->
+<option value="10" data-info="Be Quiet! Pure Base PSU Cable Extension, 24-pin ATX, Black">Be Quiet! Pure Base PSU Cable Extension (24-pin ATX)</option>
+<option value="15" data-info="Be Quiet! Shadow Base PSU Cable Kit, 8-pin EPS, Black/Red">Be Quiet! Shadow Base PSU Cable Kit (8-pin EPS)</option>
+<option value="20" data-info="Be Quiet! Cable Extension, 6+2 PCIe, Red/Black">Be Quiet! Cable Extension (6+2 PCIe)</option>
+
+<!-- SilverStone -->
+<option value="10" data-info="SilverStone 24-pin ATX Cable, Black">SilverStone 24-pin ATX Cable</option>
+<option value="15" data-info="SilverStone 8-pin EPS Cable, White">SilverStone 8-pin EPS Cable</option>
+<option value="20" data-info="SilverStone 6+2 PCIe Cable, Black/Green">SilverStone 6+2 PCIe Cable</option>
+
+<!-- EVGA -->
+<option value="10" data-info="EVGA PSU Cable Kit, 24-pin ATX, Black">EVGA PSU Cable Kit (24-pin ATX)</option>
+<option value="15" data-info="EVGA 8-pin EPS Cable Extension, Black/Yellow">EVGA 8-pin EPS Cable Extension</option>
+<option value="20" data-info="EVGA 6+2 PCIe Cable Extension, Black/Red">EVGA 6+2 PCIe Cable Extension</option>
+
+<!-- XPG -->
+<option value="10" data-info="XPG Modular Cable Kit, 24-pin ATX, Black">XPG Modular Cable Kit (24-pin ATX)</option>
+<option value="15" data-info="XPG Cable Extension, 6+2 PCIe, Black/Blue">XPG Cable Extension (6+2 PCIe)</option>
+<option value="20" data-info="XPG PSU Cable, 8-pin EPS, Black/White">XPG PSU Cable (8-pin EPS)</option>
+
+                </select>
+            </div>
+            <div class="component">
+                <label for="wifi">Wi-Fi адаптер:</label>
+                <select id="wifi" onchange="updatePrice()">
+                    <option value="0">Выберите Wi-Fi адаптер</option>
+<!-- TP-Link -->
+<option value="10" data-info="TP-Link Archer T4U, USB 3.0, AC1200">TP-Link Archer T4U</option>
+<option value="15" data-info="TP-Link Archer T9UH, USB 3.0, AC1900">TP-Link Archer T9UH</option>
+<option value="20" data-info="TP-Link TL-WN725N, USB 2.0, N150">TP-Link TL-WN725N</option>
+<option value="25" data-info="TP-Link Archer T3U, USB 3.0, AC1300">TP-Link Archer T3U</option>
+
+<!-- ASUS -->
+<option value="10" data-info="ASUS USB-AC68, USB 3.0, AC1900">ASUS USB-AC68</option>
+<option value="15" data-info="ASUS USB-AC53, USB 3.0, AC1200">ASUS USB-AC53</option>
+<option value="20" data-info="ASUS PCE-AC55BT, PCIe, AC1200">ASUS PCE-AC55BT</option>
+<option value="25" data-info="ASUS PCE-AX58BT, PCIe, Wi-Fi 6, AX3000">ASUS PCE-AX58BT</option>
+
+<!-- Netgear -->
+<option value="10" data-info="Netgear Nighthawk A7000, USB 3.0, AC1900">Netgear Nighthawk A7000</option>
+<option value="15" data-info="Netgear AC1200, USB 3.0, AC1200">Netgear AC1200</option>
+<option value="20" data-info="Netgear A6210, USB 3.0, AC1200">Netgear A6210</option>
+<option value="25" data-info="Netgear Nighthawk AC1900, USB 3.0, AC1900">Netgear Nighthawk AC1900</option>
+
+<!-- D-Link -->
+<option value="10" data-info="D-Link DWA-182, USB 2.0, AC750">D-Link DWA-182</option>
+<option value="15" data-info="D-Link DWA-171, USB 2.0, N600">D-Link DWA-171</option>
+<option value="20" data-info="D-Link DWA-X1850, USB 3.0, Wi-Fi 6, AX1800">D-Link DWA-X1850</option>
+<option value="25" data-info="D-Link DWA-192, USB 3.0, AC1900">D-Link DWA-192</option>
+
+<!-- Linksys -->
+<option value="10" data-info="Linksys WUSB6300, USB 3.0, AC1200">Linksys WUSB6300</option>
+<option value="15" data-info="Linksys WUSB6100M, USB 3.0, AC600">Linksys WUSB6100M</option>
+<option value="20" data-info="Linksys WUSB6400M, USB 3.0, AC1300">Linksys WUSB6400M</option>
+<option value="25" data-info="Linksys WPC300N, PCIe, N300">Linksys WPC300N</option>
+
+<!-- EDIMAX -->
+<option value="10" data-info="EDIMAX EW-7811UTC, USB 3.0, AC600">EDIMAX EW-7811UTC</option>
+<option value="15" data-info="EDIMAX EW-7822ULC, USB 2.0, AC600">EDIMAX EW-7822ULC</option>
+<option value="20" data-info="EDIMAX EW-7833UAC, USB 3.0, AC1200">EDIMAX EW-7833UAC</option>
+<option value="25" data-info="EDIMAX EW-7612UAn, USB 2.0, N150">EDIMAX EW-7612UAn</option>
+
+<!-- Tenda -->
+<option value="10" data-info="Tenda U12, USB 3.0, AC1200">Tenda U12</option>
+<option value="15" data-info="Tenda U9C, USB 2.0, N300">Tenda U9C</option>
+<option value="20" data-info="Tenda AC23, USB 3.0, AC1200">Tenda AC23</option>
+<option value="25" data-info="Tenda U9, USB 2.0, N150">Tenda U9</option>
+
+<!-- Xiaomi -->
+<option value="10" data-info="Xiaomi Mi USB Wi-Fi Adapter, USB 2.0, N300">Xiaomi Mi USB Wi-Fi Adapter</option>
+<option value="15" data-info="Xiaomi Mi Wi-Fi Repeater 2, USB 2.0, N300">Xiaomi Mi Wi-Fi Repeater 2</option>
+
+                </select>
+            </div>
+            <div id="componentInfo" style="display: none; position: absolute; left: 0; top: 0; background: #fff; padding: 10px; border: 1px solid #ccc;">
+                <!-- Информация о компоненте -->
+            </div>
+            <button class="reset" onclick="showSummary()">Готово</button>
+        </div>
+        <div class="summary" id="summarySection">
+            <div id="compatibilityWarning" class="compatibility-warning" style="max-width: 1000px;"></div>
+            <div id="suggestions" class="compatibility-warning" style="max-width: 1000px;"></div>
+                       <h2>Общая информация</h2>
+            <ul id="selectedComponents" style="max-width: 1000px;">
+                <!-- Список выбранных комплектующих -->
+            </ul>
+            <div id="caseImage" style="text-align: center; margin-top: 20px;">
+                <!-- Изображение корпуса -->
+            </div>
+        </div>
+    </div>
+
+    <div class="floating-summary" id="floatingSummary">
+        <!-- Содержимое плавающей панели -->
+    </div>
+
+    <script>
+        // Оригинальный код JavaScript остается, добавляем новую функциональность
+
+        // Отслеживание прокрутки для плавающей панели
+        window.addEventListener('scroll', function() {
+            const floatingSummary = document.getElementById('floatingSummary');
+            if (window.scrollY > 300) {
+                floatingSummary.style.display = 'block';
+                updateFloatingSummary();
+            } else {
+                floatingSummary.style.display = 'none';
+            }
+        });
+
+        // Функция проверки совместимости
+        function checkCompatibility() {
+            const warning = document.getElementById('compatibilityWarning');
+            const suggestions = document.getElementById('suggestions');
+            const cpu = document.getElementById('cpu').value;
+            const gpu = document.getElementById('gpu').value;
+            const psu = document.getElementById('psu').value;
+            const ram = document.getElementById('ram').value;
+            const hdd = document.getElementById('hdd').value;
+            const ssd = document.getElementById('ssd').value;
+            const motherboard = document.getElementById('motherboard').value;
+
+            let warnings = [];
+            let suggestionsList = [];
+
+            // Пример проверок совместимости
+            if (parseInt(gpu) > 20000 && parseInt(psu) < 3000) {
+                warnings.push("Рекомендуется более мощный блок питания для выбранной видеокарты");
+            }
+
+            if (parseInt(gpu) > 20000 && parseInt(cpu) < 8500) {
+                warnings.push("Рекомендуется более мощный процессор для выбранной видеокарты");
+                suggestionsList.push("Рекомендуем заменить процессор на Intel Core i5-12600K или выше");
+            }
+
+            if (parseInt(cpu) > 12000 && parseInt(gpu) < 14000) {
+                warnings.push("Рекомендуется более мощная видеокарта для выбранного процессора");
+                suggestionsList.push("Рекомендуем заменить видеокарту на NVIDIA RTX 3060 или выше");
+            }
+
+            // Проверка совместимости процессора и материнской платы
+            if ((parseInt(cpu) >= 1000 && parseInt(cpu) <= 15000) && (parseInt(motherboard) < 255 || parseInt(motherboard) > 300)) {
+                warnings.push("Выбранный процессор Intel не совместим с выбранной материнской платой");
+                suggestionsList.push("Рекомендуем выбрать материнскую плату с сокетом LGA 1151 или LGA 1200");
+            }
+
+            if ((parseInt(cpu) >= 1000 && parseInt(cpu) <= 12000) && (parseInt(motherboard) < 305 || parseInt(motherboard) > 460)) {
+                warnings.push("Выбранный процессор AMD не совместим с выбранной материнской платой");
+                suggestionsList.push("Рекомендуем выбрать материнскую плату с сокетом AM4");
+            }
+
+            // Проверка наличия основных компонентов
+            if (parseInt(cpu) == 0) {
+                warnings.push("Не выбран процессор");
+            }
+            if (parseInt(gpu) == 0) {
+                warnings.push("Не выбрана видеокарта");
+            }
+            if (parseInt(ram) == 0) {
+                warnings.push("Не выбрана оперативная память");
+            }
+            if (parseInt(hdd) == 0 && parseInt(ssd) == 0) {
+                warnings.push("Не выбран накопитель (HDD или SSD)");
+            }
+
+            if (warnings.length > 0) {
+                warning.style.display = 'block';
+                warning.innerHTML = warnings.join('<br>');
+            } else {
+                warning.style.display = 'none';
+            }
+
+            if (suggestionsList.length > 0) {
+                suggestions.style.display = 'block';
+                suggestions.innerHTML = suggestionsList.join('<br>');
+            } else {
+                suggestions.style.display = 'none';
+            }
+        }
+
+        // Обновление плавающей панели
+        function updateFloatingSummary() {
+            const floatingSummary = document.getElementById('floatingSummary');
+            floatingSummary.innerHTML = `
+                <h3>Текущая конфигурация</h3>
+                <p>${document.getElementById('cpuChoice').innerText}</p>
+                <p>${document.getElementById('gpuChoice').innerText}</p>
+                <p>Общая стоимость: ${document.getElementById('totalPrice').innerText} грн</p>
+            `;
+        }
+
+        // Модифицируем существующую функцию updatePrice
+        const originalUpdatePrice = updatePrice;
+        function updatePrice() {
+            originalUpdatePrice();
+            checkCompatibility();
+            updateSelectedComponents();
+            if (document.getElementById('floatingSummary').style.display === 'block') {
+                updateFloatingSummary();
+            }
+        }
+
+        // Обновление списка выбранных комплектующих
+        function updateSelectedComponents() {
+            const selectedComponents = document.getElementById('selectedComponents');
+            selectedComponents.innerHTML = `
+                <li>Процессор: ${document.querySelector('#cpu option:checked').textContent}</li>
+                <li>Видеокарта: ${document.querySelector('#gpu option:checked').textContent}</li>
+                <li>Кулер: ${document.querySelector('#cooler option:checked').textContent}</li>
+                <li>Материнская плата: ${document.querySelector('#motherboard option:checked').textContent}</li>
+                <li>Оперативная память: ${document.querySelector('#ram option:checked').textContent}</li>
+                <li>SSD: ${document.querySelector('#ssd option:checked').textContent}</li>
+                <li>HDD: ${document.querySelector('#hdd option:checked').textContent}</li>
+                <li>Блок питания: ${document.querySelector('#psu option:checked').textContent}</li>
+                <li>Корпус: ${document.querySelector('#case option:checked').textContent}</li>
+                <li>Вентиляторы: ${document.querySelector('#fans option:checked').textContent}</li>
+                <li>Кабеля: ${document.querySelector('#cables option:checked').textContent}</li>
+                <li>Wi-Fi адаптер: ${document.querySelector('#wifi option:checked').textContent}</li>
+            `;
+
+            // Обновление изображения корпуса
+            const caseImage = document.getElementById('caseImage');
+            const selectedCase = document.querySelector('#case option:checked').textContent;
+            caseImage.innerHTML = `<img src="images/${selectedCase}.jpg" alt="${selectedCase}" style="max-width: 100%; border-radius: 10px;">`;
+        }
+
+        // Показать секцию с итоговой информацией
+        function showSummary() {
+            document.getElementById('summarySection').style.display = 'block';
+            checkCompatibility();
+            updateSelectedComponents();
+            updateFloatingSummary();
+        }
+    </script>
+</body>
+</html>
